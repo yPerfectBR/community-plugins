@@ -1,6 +1,7 @@
 --!nonstrict
 local apply = require("./lib/apply.luau")
 local mpvpaper = require("./lib/backends/mpvpaper.luau")
+local we_backend = require("./lib/backends/wallpaperengine.luau")
 local config = require("./lib/config.luau")
 local session_cache = require("./lib/session_cache.luau")
 
@@ -9,6 +10,7 @@ noctalia.setUpdateInterval(5000)
 local function publishMeta()
   noctalia.state.set("meta", {
     mpvpaper = mpvpaper.available(),
+    wallpaperEngine = we_backend.available(),
     hasPixabayKey = config.hasPixabayKey(),
     hasWallhavenKey = config.hasWallhavenKey(),
   })
@@ -59,6 +61,14 @@ function onIpc(event, payload)
       publishStatus(status)
       noctalia.notify("Perfect Wallpapers", "Video applied")
     end
+  elseif (event == "apply-we" or event == "apply-wallpaperengine") and type(payload) == "string" and payload ~= "" then
+    local status, err = apply.setWallpaperEngine({ id = payload }, "*")
+    if status == nil then
+      noctalia.notifyError("Perfect Wallpapers", err or "failed")
+    else
+      publishStatus(status)
+      noctalia.notify("Perfect Wallpapers", "Wallpaper Engine applied")
+    end
   end
 end
 
@@ -77,9 +87,22 @@ noctalia.state.watch("command", function(cmd)
     if status ~= nil then
       publishStatus(status)
     end
+  elseif (cmd.action == "apply-we" or cmd.action == "apply-wallpaperengine") and type(cmd.id) == "string" then
+    local status = apply.setWallpaperEngine({ id = cmd.id, previewPath = cmd.previewPath }, cmd.connector or "*")
+    if status ~= nil then
+      publishStatus(status)
+    end
   end
   noctalia.state.set("command", { action = "ack" })
 end)
+
+function onExit(_signal)
+  apply.stop()
+end
+
+function onStop()
+  apply.stop()
+end
 
 publishMeta()
 current()

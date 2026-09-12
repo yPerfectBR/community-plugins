@@ -80,6 +80,7 @@ end
 function apply.stop()
   mpvpaper.stop()
   we_backend.stop()
+  mutex.stopForeign()
   mutex.enableNoctaliaWallpaper(true)
   local status = {
     mode = "none",

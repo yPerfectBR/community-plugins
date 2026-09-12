@@ -79,7 +79,7 @@ Executar papéis de parede animados no Wayland exige cuidados arquiteturais para
 - **Suspensão do Papel de Parede Nativo**:
   Enquanto a cena animada estiver em execução, a camada nativa estática do Noctalia é desativada (`mutex.enableNoctaliaWallpaper(false)`), liberando uso de GPU e evitando renderização dupla.
 - **Finalização Limpa de Processos**:
-  Ao parar ou trocar para uma imagem estática, qualquer processo do `linux-wallpaperengine` é finalizado de forma segura com escalonamento de sinais (`SIGTERM` seguido de `SIGKILL`), restaurando o wallpaper estático.
+  Ao parar ou trocar para outro provedor (como Wallhaven, Pixabay ou pastas locais) ou para vídeo, qualquer processo ou serviço ativo do `linux-wallpaperengine` é finalizado imediatamente com escalonamento de sinais (`SIGTERM` seguido de `SIGKILL`). Isso garante eficiência máxima e consumo residual zero de GPU/CPU, liberando imediatamente os recursos de hardware do sistema e reativando a camada estática nativa.
 - **Configurações de Áudio e FPS**:
   - `mute_video`: passa o argumento `--silent` para evitar sons inesperados.
   - `video_fps`: passa o argumento `--fps <alvo>` para travar a taxa de quadros e manter a GPU fria.

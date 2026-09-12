@@ -58,5 +58,6 @@ Wallhaven enforces a public rate limit of approximately 45 requests per minute:
 
 When you click any Wallhaven thumbnail in the grid:
 1. The full-resolution image is downloaded directly into your configured wallpaper download folder (by default `~/Pictures/Wallpapers/perfect-wallpapers`).
-2. The image is handed to Noctalia's native wallpaper engine via `noctalia.setWallpaper()`.
-3. Noctalia and Umbriel immediately synchronize the desktop color palette, system accent colors, and bar themes to match the new image.
+2. Any active dynamic wallpaper background processes (such as `linux-wallpaperengine` from Wallpaper Engine or `mpvpaper`) are automatically and immediately stopped, releasing all GPU and CPU resources for maximum efficiency.
+3. Noctalia's native wallpaper layer is re-enabled and receives the image via `noctalia.setWallpaper()`.
+4. Noctalia and Umbriel immediately synchronize the desktop color palette, system accent colors, and bar themes to match the new image.

@@ -79,7 +79,7 @@ Running animated wallpapers on Wayland requires careful handling to avoid visual
 - **Native Wallpaper Suspension**:
   While the live scene is active, Noctalia's native static wallpaper layer is disabled (`mutex.enableNoctaliaWallpaper(false)`), freeing GPU cycles and avoiding double compositing.
 - **Process Cleanup & Escrow**:
-  When stopping or switching back to an image, any active `linux-wallpaperengine` processes are cleanly terminated with escalating signals (`SIGTERM` followed by `SIGKILL`), restoring the native static background.
+  When stopping or switching back to an image (such as Wallhaven, Pixabay, or Local folders) or video backend, any active `linux-wallpaperengine` processes are cleanly terminated immediately with escalating signals (`SIGTERM` followed by `SIGKILL`). This guarantees zero residual GPU/CPU consumption, prevents zombie processes, and frees system resources instantly.
 - **Audio & FPS Settings**:
   - `mute_video`: passes `--silent` to prevent unexpected sound from scenes.
   - `video_fps`: passes `--fps <target>` to throttle rendering rates and keep hardware cool.

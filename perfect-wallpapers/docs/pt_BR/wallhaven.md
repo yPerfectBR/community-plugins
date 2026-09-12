@@ -58,5 +58,6 @@ O Wallhaven impõe um limite público de aproximadamente 45 requisições por mi
 
 Ao clicar em qualquer miniatura do Wallhaven na grade:
 1. A imagem em resolução completa é baixada para a sua pasta configurada de downloads (por padrão `~/Pictures/Wallpapers/perfect-wallpapers`).
-2. A imagem é aplicada no motor nativo do Noctalia via `noctalia.setWallpaper()`.
-3. O Noctalia e o Umbriel sincronizam imediatamente a paleta de cores do sistema, tons de destaque e a barra para combinar com o wallpaper novo.
+2. Qualquer serviço ou processo de papel de parede dinâmico em segundo plano (como o `linux-wallpaperengine` do Wallpaper Engine ou `mpvpaper`) é encerrado imediatamente, liberando 100% dos recursos de GPU e CPU do sistema para máxima eficiência.
+3. A camada nativa de papéis de parede do Noctalia é reativada e recebe a imagem via `noctalia.setWallpaper()`.
+4. O Noctalia e o Umbriel sincronizam imediatamente a paleta de cores do sistema, tons de destaque e a barra para combinar com o wallpaper novo.
