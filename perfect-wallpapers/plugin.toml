@@ -4,14 +4,14 @@
 
 id = "perfect/perfect-wallpapers"
 name = "Perfect Wallpapers"
-version = "0.3.1"
+version = "0.4.0"
 plugin_api = 28
 author = "perfect"
 license = "MIT"
 dependencies = ["mpvpaper", "mpv", "pkill", "setsid", "linux-wallpaperengine"]
 tags = ["bar", "panel", "shortcut", "wallpaper", "video", "theming", "media"]
 icon = "photo"
-description = "Browse Pixabay, Wallhaven, and Wallpaper Engine, apply wallpapers, and keep wallpaper backends from fighting each other."
+description = "Browse Bing Daily, NASA APOD, Pixabay, Wallhaven, and Wallpaper Engine, with per-monitor controls and video wallpapers."
 
 [[setting]]
 key = "default_provider"
@@ -19,6 +19,7 @@ type = "select"
 label_key = "settings.default_provider.label"
 default = "pixabay"
 options = [
+  { value = "daily", label_key = "settings.default_provider.options.daily" },
   { value = "local", label_key = "settings.default_provider.options.local" },
   { value = "pixabay", label_key = "settings.default_provider.options.pixabay" },
   { value = "wallhaven", label_key = "settings.default_provider.options.wallhaven" },
@@ -45,6 +46,40 @@ type = "string_list"
 label_key = "settings.local_directories.label"
 description_key = "settings.local_directories.description"
 default = []
+
+[[setting]]
+key = "copy_to_wallpaper_dir"
+type = "bool"
+label_key = "settings.copy_to_wallpaper_dir.label"
+description_key = "settings.copy_to_wallpaper_dir.description"
+default = false
+
+# ── Daily Wallpaper (Bing & NASA APOD) ───────────────────────────────────────
+
+[[setting]]
+key = "daily_subsource"
+type = "select"
+label_key = "settings.daily_subsource.label"
+description_key = "settings.daily_subsource.description"
+default = "bing"
+options = [
+  { value = "bing", label_key = "settings.daily_subsource.options.bing" },
+  { value = "nasa", label_key = "settings.daily_subsource.options.nasa" },
+]
+
+[[setting]]
+key = "daily_auto_rotate"
+type = "bool"
+label_key = "settings.daily_auto_rotate.label"
+description_key = "settings.daily_auto_rotate.description"
+default = false
+
+[[setting]]
+key = "daily_locale"
+type = "string"
+label_key = "settings.daily_locale.label"
+description_key = "settings.daily_locale.description"
+default = ""
 
 # ── Pixabay ──────────────────────────────────────────────────────────────────
 
@@ -266,6 +301,25 @@ max = 240
 step = 1
 
 [[setting]]
+key = "video_scale"
+type = "select"
+label_key = "settings.video_scale.label"
+description_key = "settings.video_scale.description"
+default = "panscan"
+options = [
+  { value = "panscan", label_key = "settings.video_scale.options.panscan" },
+  { value = "fit", label_key = "settings.video_scale.options.fit" },
+  { value = "stretch", label_key = "settings.video_scale.options.stretch" },
+]
+
+[[setting]]
+key = "pause_on_battery"
+type = "bool"
+label_key = "settings.pause_on_battery.label"
+description_key = "settings.pause_on_battery.description"
+default = true
+
+[[setting]]
 key = "hardware_decode"
 type = "bool"
 label_key = "settings.hardware_decode.label"
@@ -310,3 +364,7 @@ entry = "widget.luau"
 [[shortcut]]
 id = "shortcut"
 entry = "shortcut.luau"
+
+[[desktop_widget]]
+id = "desktop"
+entry = "desktop_widget.luau"

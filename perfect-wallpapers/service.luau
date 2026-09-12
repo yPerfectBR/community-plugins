@@ -3,9 +3,14 @@ local apply = require("./lib/apply.luau")
 local mpvpaper = require("./lib/backends/mpvpaper.luau")
 local we_backend = require("./lib/backends/wallpaperengine.luau")
 local config = require("./lib/config.luau")
+local daily = require("./lib/daily.luau")
 local session_cache = require("./lib/session_cache.luau")
 
 noctalia.setUpdateInterval(5000)
+
+local lastDailyCheck = 0
+local lastDailyAppliedDate = ""
+local isRotatingDaily = false
 
 local function publishMeta()
   noctalia.state.set("meta", {
@@ -13,6 +18,7 @@ local function publishMeta()
     wallpaperEngine = we_backend.available(),
     hasPixabayKey = config.hasPixabayKey(),
     hasWallhavenKey = config.hasWallhavenKey(),
+    outputs = (type(noctalia.outputs) == "function" and noctalia.outputs()) or {},
   })
 end
 
@@ -33,8 +39,57 @@ end
 -- survive a reboot (or a session where the hub is never opened again).
 session_cache.wipeAll()
 
+local function checkDailyRotation()
+  if not config.dailyAutoRotate() or isRotatingDaily then
+    return
+  end
+
+  local now = os.time()
+  -- Check at most once every 10 minutes
+  if (now - lastDailyCheck) < 600 then
+    return
+  end
+  lastDailyCheck = now
+
+  local subsource = config.dailySubsource()
+  local locale = config.dailyLocale()
+
+  isRotatingDaily = true
+  daily.today(subsource, locale, function(item, err)
+    isRotatingDaily = false
+    if item == nil or type(item.downloadURL) ~= "string" then
+      return
+    end
+
+    local itemDate = item.date or os.date("%Y-%m-%d")
+    if itemDate == lastDailyAppliedDate then
+      return
+    end
+
+    lastDailyAppliedDate = itemDate
+    apply.downloadAndApply(item, "*", function(nextStatus, applyErr)
+      if nextStatus ~= nil then
+        publishStatus(nextStatus)
+        noctalia.notify("Perfect Wallpapers", "Daily Wallpaper: " .. (item.title or itemDate))
+      end
+    end)
+  end)
+end
+
 function update()
   publishMeta()
+  checkDailyRotation()
+end
+
+local function parsePayloadWithConnector(payload)
+  if type(payload) ~= "string" or payload == "" then
+    return "", "*"
+  end
+  local first, second = string.match(payload, "^(%S+)%s+(%S+)$")
+  if first and second then
+    return first, second
+  end
+  return payload, "*"
 end
 
 function onIpc(event, payload)
@@ -42,19 +97,39 @@ function onIpc(event, payload)
     local status = current()
     noctalia.notify("Perfect Wallpapers", status.mode or "none")
   elseif event == "stop" then
-    publishStatus(apply.stop())
+    local conn = (type(payload) == "string" and payload ~= "") and payload or "*"
+    publishStatus(apply.stop(conn))
     noctalia.notify("Perfect Wallpapers", "Stopped")
   elseif event == "clear-cache" then
     session_cache.wipeAll(function()
+      daily.clearCache()
       noctalia.notify("Perfect Wallpapers", "Cache cleared")
     end)
   elseif event == "open" or event == "toggle" then
     noctalia.togglePanel("perfect/perfect-wallpapers:hub")
+  elseif event == "apply-daily" or event == "rotate-daily" then
+    local conn = (type(payload) == "string" and payload ~= "") and payload or "*"
+    daily.today(config.dailySubsource(), config.dailyLocale(), function(item, err)
+      if item == nil then
+        noctalia.notifyError("Perfect Wallpapers", "Failed to fetch Daily Wallpaper")
+        return
+      end
+      apply.downloadAndApply(item, conn, function(nextStatus, applyErr)
+        if nextStatus ~= nil then
+          publishStatus(nextStatus)
+          noctalia.notify("Perfect Wallpapers", "Daily: " .. (item.title or "Applied"))
+        else
+          noctalia.notifyError("Perfect Wallpapers", applyErr or "Apply failed")
+        end
+      end)
+    end)
   elseif event == "apply-image" and type(payload) == "string" and payload ~= "" then
-    publishStatus(apply.setStatic(noctalia.expandPath(payload), { source = "cli" }))
+    local path, conn = parsePayloadWithConnector(payload)
+    publishStatus(apply.setStatic(noctalia.expandPath(path), { source = "cli" }, conn))
     noctalia.notify("Perfect Wallpapers", "Image applied")
   elseif event == "apply-video" and type(payload) == "string" and payload ~= "" then
-    local status, err = apply.setVideo(noctalia.expandPath(payload), { source = "cli" }, "*")
+    local path, conn = parsePayloadWithConnector(payload)
+    local status, err = apply.setVideo(noctalia.expandPath(path), { source = "cli" }, conn)
     if status == nil then
       noctalia.notifyError("Perfect Wallpapers", err or "failed")
     else
@@ -62,7 +137,8 @@ function onIpc(event, payload)
       noctalia.notify("Perfect Wallpapers", "Video applied")
     end
   elseif (event == "apply-we" or event == "apply-wallpaperengine") and type(payload) == "string" and payload ~= "" then
-    local status, err = apply.setWallpaperEngine({ id = payload }, "*")
+    local id, conn = parsePayloadWithConnector(payload)
+    local status, err = apply.setWallpaperEngine({ id = id }, conn)
     if status == nil then
       noctalia.notifyError("Perfect Wallpapers", err or "failed")
     else
@@ -77,11 +153,12 @@ noctalia.state.watch("command", function(cmd)
     return
   end
   if cmd.action == "stop" then
-    publishStatus(apply.stop())
+    publishStatus(apply.stop(cmd.connector or "*"))
   elseif cmd.action == "clear-cache" then
     session_cache.wipeAll()
+    daily.clearCache()
   elseif cmd.action == "apply-image" and type(cmd.path) == "string" then
-    publishStatus(apply.setStatic(cmd.path, cmd.meta))
+    publishStatus(apply.setStatic(cmd.path, cmd.meta, cmd.connector or "*"))
   elseif cmd.action == "apply-video" and type(cmd.path) == "string" then
     local status = apply.setVideo(cmd.path, cmd.meta, cmd.connector or "*")
     if status ~= nil then
@@ -92,6 +169,16 @@ noctalia.state.watch("command", function(cmd)
     if status ~= nil then
       publishStatus(status)
     end
+  elseif cmd.action == "apply-daily" then
+    daily.today(config.dailySubsource(), config.dailyLocale(), function(item)
+      if item ~= nil then
+        apply.downloadAndApply(item, cmd.connector or "*", function(nextStatus)
+          if nextStatus ~= nil then
+            publishStatus(nextStatus)
+          end
+        end)
+      end
+    end)
   end
   noctalia.state.set("command", { action = "ack" })
 end)

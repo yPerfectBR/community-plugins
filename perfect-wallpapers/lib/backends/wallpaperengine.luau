@@ -8,9 +8,9 @@ function wallpaperengine.available()
   return noctalia.commandExists("linux-wallpaperengine")
 end
 
-function wallpaperengine.stop()
-  mutex.stopWallpaperEngine()
-  mutex.enableNoctaliaWallpaper(true)
+function wallpaperengine.stop(connector)
+  mutex.stopWallpaperEngine(connector)
+  mutex.enableNoctaliaWallpaper(true, connector)
 end
 
 function wallpaperengine.start(idOrPath, opts, connector)
@@ -20,14 +20,18 @@ function wallpaperengine.start(idOrPath, opts, connector)
     target = "*"
   end
 
-  mutex.stopForeign()
+  mutex.stopForeign(target)
 
   -- Sincroniza a paleta de cores do Noctalia / Umbriel com o preview estático
   if opts.previewPath and noctalia.fileExists(opts.previewPath) then
-    noctalia.setWallpaper(opts.previewPath)
+    if target == "*" or target == "all" then
+      noctalia.setWallpaper(opts.previewPath)
+    else
+      noctalia.setWallpaper(target, opts.previewPath)
+    end
   end
 
-  mutex.enableNoctaliaWallpaper(false)
+  mutex.enableNoctaliaWallpaper(false, target)
 
   local args = { "setsid -f linux-wallpaperengine" }
 

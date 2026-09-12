@@ -15,7 +15,7 @@ Este plugin foi concebido e arquitetado para unificar todos os fluxos de trabalh
 | Campo | Valor |
 | --- | --- |
 | ID | `perfect/perfect-wallpapers` |
-| Entradas | Widget da barra: `widget`; painel: `hub`; atalho: `shortcut`; serviço: `service` |
+| Entradas | Widget da barra: `widget`; painel: `hub`; atalho: `shortcut`; serviço: `service`; widget de desktop: `desktop` |
 
 ---
 
@@ -25,6 +25,7 @@ Para instruções detalhadas de configuração, resolução de dependências, ob
 
 | Provedor | Tipos de Mídia | Chave de API / Requisitos | Documentação |
 | :--- | :--- | :--- | :--- |
+| **Daily Wallpaper** | Arquivo diário 4K/UHD (Bing) & NASA APOD | Nenhuma | Integrado |
 | **Wallhaven** | Imagens estáticas em altíssima resolução & arte anime | Opcional (chave gratuita para NSFW e limites maiores) | [Guia do Wallhaven](wallhaven.md) |
 | **Pixabay** | Fotos, ilustrações & vídeos em loop de alta fidelidade | Obrigatória (chave pessoal gratuita) | [Guia do Pixabay](pixabay.md) |
 | **Wallpaper Engine** | Cenas 2D/3D interativas, loops de vídeo & páginas web | `linux-wallpaperengine` + Steam Workshop | [Guia do Wallpaper Engine](wallpaper-engine.md) |
@@ -54,7 +55,10 @@ Adicione a entrada `widget` à sua barra no Noctalia (**Settings → Bar → Wid
 ### 2. Atalho do Painel de Controle (Control Center)
 Adicione a entrada `shortcut` ao seu Control Center (**Settings → Control Center → Shortcuts**). O atalho sinaliza quando há um wallpaper ativo e abre o `hub` com um clique.
 
-### 3. Linha de Comando & IPC
+### 3. Widget de Desktop
+Adicione a entrada `desktop` à sua área de trabalho (**Settings → Desktop → Widgets**). O widget exibe na sua tela o título, créditos fotográficos/científicos, data e resumo da explicação do Wallpaper Diário ativo.
+
+### 4. Linha de Comando & IPC
 Abra o painel ou controle o serviço em segundo plano via IPC:
 
 ```sh
@@ -62,6 +66,7 @@ Abra o painel ou controle o serviço em segundo plano via IPC:
 noctalia msg panel-toggle perfect/perfect-wallpapers:hub
 
 # Alternar provedor diretamente via IPC
+noctalia msg plugin perfect/perfect-wallpapers:hub all daily
 noctalia msg plugin perfect/perfect-wallpapers:hub all wallhaven
 noctalia msg plugin perfect/perfect-wallpapers:hub all pixabay
 noctalia msg plugin perfect/perfect-wallpapers:hub all wallpaperengine
@@ -69,6 +74,9 @@ noctalia msg plugin perfect/perfect-wallpapers:hub all local
 
 # Consultar o status ativo
 noctalia msg plugin perfect/perfect-wallpapers:service all status
+
+# Rotacionar / aplicar o papel de parede diário de hoje
+noctalia msg plugin perfect/perfect-wallpapers:service all apply-daily
 
 # Parar motores ativos de vídeo ou Wallpaper Engine
 noctalia msg plugin perfect/perfect-wallpapers:service all stop
@@ -85,7 +93,11 @@ Configure as opções em **Settings → Plugins → Perfect Wallpapers** ou no a
 
 | Configuração | Tipo | Padrão | Descrição |
 | :--- | :--- | :--- | :--- |
-| `default_provider` | `select` | `pixabay` | Provedor inicial ao abrir o hub (`local`, `pixabay`, `wallhaven`, `wallpaperengine`). |
+| `default_provider` | `select` | `pixabay` | Provedor inicial ao abrir o hub (`daily`, `local`, `pixabay`, `wallhaven`, `wallpaperengine`). |
+| `daily_subsource` | `select` | `bing` | Fonte padrão para o Wallpaper Diário (`bing`, `nasa`). |
+| `daily_auto_rotate` | `bool` | `false` | Busca e aplica automaticamente a imagem do dia quando disponível. |
+| `daily_locale` | `string` | `""` | Código de idioma/região para a galeria do Bing (ex: `pt-BR`, `en-US`). |
+| `copy_to_wallpaper_dir` | `bool` | `false` | Salva uma cópia dos papéis de parede diários e locais aplicados na sua pasta pessoal. |
 | `download_dir` | `folder` | `""` | Pasta padrão para download de wallpapers (vazio = `~/Pictures/Wallpapers/perfect-wallpapers`). |
 | `local_directories` | `string_list` | `[]` | Lista de pastas locais varridas em busca de imagens e vídeos. |
 | `wallpaperengine_dir` | `folder` | `""` | Caminho customizado da pasta do Workshop Steam `431960` se estiver fora dos locais padrão. |
@@ -97,6 +109,8 @@ Configure as opções em **Settings → Plugins → Perfect Wallpapers** ou no a
 | `wallhaven_purity_sketchy` | `bool` | `false` | Inclui wallpapers artísticos/sugestivos do Wallhaven. |
 | `wallhaven_purity_nsfw` | `bool` | `false` | Inclui wallpapers adultos (requer chave de API do Wallhaven). |
 | `video_fps` | `int` | `30` | Limite máximo de FPS para vídeo e Wallpaper Engine (0 = sem limite). |
+| `video_scale` | `select` | `panscan` | Modo de escala para mpvpaper (`panscan`, `fit`, `stretch`). |
+| `pause_on_battery` | `bool` | `true` | Pausa animações em segundo plano quando estiver usando a bateria do notebook. |
 | `hardware_decode` | `bool` | `true` | Habilita aceleração por hardware da GPU na decodificação de vídeos. |
 | `mute_video` | `bool` | `true` | Silencia automaticamente o áudio de papéis de parede e vídeos. |
 | `stop_foreign_backends` | `bool` | `true` | Encerra daemons concorrentes (`mpvpaper`, `swww-daemon`, `awww-daemon`) ao aplicar. |

@@ -1,11 +1,13 @@
 --!nonstrict
 local config = require("./lib/config.luau")
 local paths = require("./lib/paths.luau")
+local util = require("./lib/util.luau")
 local session_cache = require("./lib/session_cache.luau")
 local pixabay = require("./lib/pixabay.luau")
 local wallhaven = require("./lib/wallhaven.luau")
 local local_library = require("./lib/local_library.luau")
 local we = require("./lib/wallpaperengine.luau")
+local daily = require("./lib/daily.luau")
 local thumbs = require("./lib/thumbs.luau")
 local apply = require("./lib/apply.luau")
 local chips = require("./ui/chips.luau")
@@ -28,6 +30,19 @@ local selectedId = ""
 local currentRequestId = 0
 local status = apply.currentStatus() or { mode = "none" }
 local isOpen = false
+
+-- Monitor selector state
+local selectedConnectorIndex = 0
+local selectedConnector = "*"
+local outputOptions = { "All Displays (*)" }
+local outputValues = { "*" }
+
+-- Quick path apply state (Drag & Drop / paste input)
+local quickPathValue = ""
+
+-- Daily Wallpaper filter state
+local dailySubsource = config.dailySubsource()
+local dailyLocale = config.dailyLocale()
 
 -- Wallpaper Engine filter state
 local weTypeIndex = 0
@@ -58,6 +73,25 @@ local fetch
 
 local function tr(key)
   return noctalia.tr(key)
+end
+
+local function refreshOutputs()
+  local outs = (type(noctalia.outputs) == "function" and noctalia.outputs()) or {}
+  outputOptions = { tr("monitors.all") }
+  outputValues = { "*" }
+  for _, out in ipairs(outs) do
+    local name = (type(out) == "table" and out.name) or tostring(out)
+    if name ~= "" then
+      table.insert(outputOptions, name)
+      table.insert(outputValues, name)
+    end
+  end
+  if selectedConnectorIndex >= #outputValues then
+    selectedConnectorIndex = 0
+    selectedConnector = "*"
+  else
+    selectedConnector = outputValues[selectedConnectorIndex + 1] or "*"
+  end
 end
 
 local function findItem(id)
@@ -99,6 +133,9 @@ local function mapError(err)
   end
   if err == "download_failed" or err == "mkdir_failed" then
     return tr("errors.download_failed")
+  end
+  if err == "file_not_found" then
+    return tr("errors.file_not_found")
   end
   if err == "mpvpaper_failed" then
     return tr("errors.apply_failed")
@@ -148,6 +185,8 @@ local function setProvider(nextProvider)
     media = "image"
   elseif provider == "wallpaperengine" then
     weTypeIndex = 0
+  elseif provider == "daily" then
+    dailySubsource = config.dailySubsource()
   end
   resetResults()
   fetch()
@@ -218,6 +257,28 @@ fetch = function()
   loading = true
   errorMessage = ""
   render()
+
+  if provider == "daily" then
+    daily.archive(dailySubsource, 8, dailyLocale, function(result, err)
+      if thisRequestId ~= currentRequestId then
+        return
+      end
+      loading = false
+      if result == nil then
+        items = {}
+        totalPagesCount = 1
+        errorMessage = mapError(err)
+        render()
+        return
+      end
+      items = result.items or {}
+      totalPagesCount = 1
+      page = 1
+      render()
+      thumbs.enqueue(items)
+    end)
+    return
+  end
 
   if provider == "local" then
     local result, err = local_library.scan({
@@ -296,8 +357,6 @@ fetch = function()
       minHeight = minH,
     }, function(result, err)
       if thisRequestId ~= currentRequestId then
-        -- O usuário trocou de aba/filtro antes da API terminar.
-        -- O resultado já está salvo no cache pelo wallhaven.search; não atualiza a UI antiga.
         return
       end
       loading = false
@@ -330,8 +389,6 @@ fetch = function()
     quality = config.pixabayVideoQuality(),
   }, function(result, err)
     if thisRequestId ~= currentRequestId then
-      -- O usuário trocou de aba/filtro antes da API terminar.
-      -- O resultado já está salvo no cache pelo pixabay.search; não atualiza a UI antiga.
       return
     end
     loading = false
@@ -367,7 +424,7 @@ local function applyItem(id)
   applying = true
   render()
 
-  apply.downloadAndApply(item, function(nextStatus, err)
+  apply.downloadAndApply(item, selectedConnector, function(nextStatus, err)
     applying = false
     if nextStatus == nil then
       noctalia.notifyError(tr("title"), mapError(err))
@@ -381,6 +438,19 @@ local function applyItem(id)
 end
 
 local function attributionLine()
+  if provider == "daily" then
+    if selectedId == "" then
+      return if dailySubsource == "bing" then tr("daily.bing_attribution") else tr("daily.nasa_attribution")
+    end
+    local item = findItem(selectedId)
+    local title = item and item.title or selectedId
+    local user = item and (item.copyright or item.user) or ""
+    if user ~= "" then
+      return string.format("%s — © %s (%s)", title, user, item.date or "")
+    end
+    return title
+  end
+
   if provider == "local" then
     if selectedId == "" then
       return tr("attribution.local_default")
@@ -418,22 +488,35 @@ local function attributionLine()
 end
 
 local function statusLine()
-  local mode = status and status.mode or "none"
-  local source = status and status.source or ""
+  local currentStatus = status
+  if selectedConnector ~= "*" and type(status) == "table" and type(status.outputs) == "table" and status.outputs[selectedConnector] then
+    currentStatus = status.outputs[selectedConnector]
+  end
+
+  local mode = currentStatus and currentStatus.mode or "none"
+  local source = currentStatus and currentStatus.source or ""
+  local title = currentStatus and (currentStatus.title or currentStatus.name or currentStatus.id) or ""
+
   if mode == "image" then
+    if title ~= "" then
+      return string.format("%s (%s)", title, source ~= "" and source or "image")
+    end
     if source ~= "" then
       return string.format(tr("status.image_from"), source)
     end
     return tr("status.image")
   end
   if mode == "video" then
+    if title ~= "" then
+      return string.format("%s (%s)", title, source ~= "" and source or "video")
+    end
     if source ~= "" then
       return string.format(tr("status.video_from"), source)
     end
     return tr("status.video")
   end
   if mode == "wallpaperengine" then
-    local name = status and (status.name or status.id) or ""
+    local name = currentStatus and (currentStatus.name or currentStatus.title or currentStatus.id) or ""
     if name ~= "" then
       return string.format(tr("status.wallpaperengine_from"), name)
     end
@@ -443,6 +526,9 @@ local function statusLine()
 end
 
 local function searchPlaceholder()
+  if provider == "daily" then
+    return tr("search_placeholder_daily")
+  end
   if provider == "wallhaven" then
     return tr("search_placeholder_wallhaven")
   end
@@ -459,6 +545,27 @@ local function mediaTabs()
   return ui.row({ gap = 8, align = "center" }, {
     chips.chip(tr("tabs.images"), media == "image", "onTabImage", "tab_image"),
     chips.chip(tr("tabs.videos"), media == "video", "onTabVideo", "tab_video"),
+  })
+end
+
+local function dailyFilters()
+  return ui.column({ gap = 10, align = "stretch" }, {
+    ui.row({ gap = 8, align = "center" }, {
+      chips.chip(tr("daily.bing"), dailySubsource == "bing", "onDailyBing", "daily_bing"),
+      chips.chip(tr("daily.nasa"), dailySubsource == "nasa", "onDailyNasa", "daily_nasa"),
+      ui.label({
+        text = if dailySubsource == "bing" then tr("daily.bing_desc") else tr("daily.nasa_desc"),
+        color = "on_surface_variant",
+        flexGrow = 1,
+        fontSize = 11,
+      }),
+      ui.button({
+        text = tr("daily.rotate_today"),
+        variant = "primary",
+        onClick = "onDailyApplyToday",
+        enabled = not loading and #items > 0,
+      }),
+    }),
   })
 end
 
@@ -499,6 +606,19 @@ local function localFilters()
     mediaTabs(),
     ui.row({ gap = 8, align = "center" }, {
       ui.label({ text = dirLabel, color = "on_surface_variant", flexGrow = 1 }),
+      ui.input({
+        key = "local_quick_path",
+        placeholder = tr("local.quick_apply_placeholder"),
+        value = quickPathValue,
+        onChange = "onQuickPathChange",
+        onSubmit = "onQuickPathSubmit",
+        width = 240,
+      }),
+      ui.button({
+        text = tr("local.apply_path_btn"),
+        variant = "outline",
+        onClick = "onQuickPathApply",
+      }),
       ui.button({
         text = tr("local.manage_dirs"),
         variant = "outline",
@@ -577,15 +697,13 @@ local function wallhavenFilters()
         onChange = "onWhRatio",
         width = 140,
       })),
-    }),
-    ui.row({ gap = 8, align = "center" }, {
-      chips.group(tr("wallhaven.resolution"), ui.row({ gap = 8, align = "center", flexGrow = 1 }, {
+      chips.group(tr("wallhaven.resolution_label"), ui.row({ gap = 4, align = "center" }, {
         ui.select({
           key = "wh_res_mode",
           options = { tr("wallhaven.resolution_atleast"), tr("wallhaven.resolution_exact") },
           selectedIndex = if whResolutionMode == "exact" then 1 else 0,
           onChange = "onWhResolutionMode",
-          width = 140,
+          width = 110,
         }),
         ui.input({
           key = `wh_width_{whClearCounter}`,
@@ -625,11 +743,19 @@ render = function()
     }),
 
     ui.row({ gap = 8, align = "center" }, {
+      chips.group(tr("monitors.target"), ui.select({
+        key = "monitor_select",
+        options = outputOptions,
+        selectedIndex = selectedConnectorIndex,
+        onChange = "onSelectMonitor",
+        width = 140,
+      })),
       chips.chip(tr("providers.local"), provider == "local", "onProviderLocal", "provider_local"),
+      chips.chip(tr("providers.daily"), provider == "daily", "onProviderDaily", "provider_daily"),
       chips.chip(tr("providers.pixabay"), provider == "pixabay", "onProviderPixabay", "provider_pixabay"),
       chips.chip(tr("providers.wallhaven"), provider == "wallhaven", "onProviderWallhaven", "provider_wallhaven"),
       chips.chip(tr("providers.wallpaperengine"), provider == "wallpaperengine", "onProviderWallpaperEngine", "provider_wallpaperengine"),
-      ui.label({ text = statusLine(), color = "on_surface_variant", flexGrow = 1 }),
+      ui.label({ text = statusLine(), color = "on_surface_variant", flexGrow = 1, maxLines = 1 }),
       ui.button({
         text = tr("actions.stop"),
         variant = "destructive",
@@ -638,19 +764,24 @@ render = function()
       }),
     }),
 
-    ui.row({ gap = 8, align = "center" }, {
-      ui.input({
-        key = `search_{provider}`,
-        placeholder = searchPlaceholder(),
-        value = query,
-        flexGrow = 1,
-        onChange = "onSearchChange",
-        onSubmit = "onSearchSubmit",
-      }),
-      ui.button({ text = tr("search"), variant = "primary", onClick = "onSearch" }),
-    }),
+    if provider ~= "daily" then
+      ui.row({ gap = 8, align = "center" }, {
+        ui.input({
+          key = `search_{provider}`,
+          placeholder = searchPlaceholder(),
+          value = query,
+          flexGrow = 1,
+          onChange = "onSearchChange",
+          onSubmit = "onSearchSubmit",
+        }),
+        ui.button({ text = tr("search"), variant = "primary", onClick = "onSearch" }),
+      })
+    else
+      nil,
 
-    if provider == "wallhaven" then
+    if provider == "daily" then
+      dailyFilters()
+    elseif provider == "wallhaven" then
       wallhavenFilters()
     elseif provider == "local" then
       localFilters()
@@ -713,11 +844,20 @@ function onOpen(_context)
   isOpen = true
   provider = config.defaultProvider()
   media = config.pixabayDefaultMedia()
+  dailySubsource = config.dailySubsource()
+  dailyLocale = config.dailyLocale()
+  refreshOutputs()
   seedWallhavenFilters()
   thumbs.setSource(provider)
   paths.ensure(paths.cacheDir(), function()
     fetch()
   end)
+end
+
+function onSelectMonitor(index, _text)
+  selectedConnectorIndex = tonumber(index) or 0
+  selectedConnector = outputValues[selectedConnectorIndex + 1] or "*"
+  render()
 end
 
 function onProviderPixabay()
@@ -732,8 +872,34 @@ function onProviderLocal()
   setProvider("local")
 end
 
+function onProviderDaily()
+  setProvider("daily")
+end
+
 function onProviderWallpaperEngine()
   setProvider("wallpaperengine")
+end
+
+function onDailyBing()
+  if dailySubsource == "bing" then
+    return
+  end
+  dailySubsource = "bing"
+  refetchFromPageOne()
+end
+
+function onDailyNasa()
+  if dailySubsource == "nasa" then
+    return
+  end
+  dailySubsource = "nasa"
+  refetchFromPageOne()
+end
+
+function onDailyApplyToday()
+  if #items > 0 then
+    applyItem(items[1].id)
+  end
 end
 
 function onTabImage()
@@ -755,6 +921,49 @@ end
 
 function onSearch()
   refetchFromPageOne()
+end
+
+function onQuickPathChange(value)
+  quickPathValue = value
+end
+
+function onQuickPathSubmit(value)
+  quickPathValue = value
+  onQuickPathApply()
+end
+
+function onQuickPathApply()
+  local p = noctalia.string.trim(quickPathValue)
+  if p == "" then
+    return
+  end
+  local expanded = noctalia.expandPath(p)
+  if not noctalia.fileExists(expanded) then
+    noctalia.notifyError(tr("title"), tr("errors.file_not_found"))
+    return
+  end
+
+  local lower = string.lower(expanded)
+  local isVideo = string.match(lower, "%.mp4$") or string.match(lower, "%.webm$") or string.match(lower, "%.mkv$") or string.match(lower, "%.gif$")
+  local meta = { source = "local", title = util.basename(expanded) }
+
+  if isVideo then
+    local st, err = apply.setVideo(expanded, meta, selectedConnector)
+    if st then
+      status = st
+      noctalia.notify(tr("title"), tr("applied"))
+      quickPathValue = ""
+      render()
+    else
+      noctalia.notifyError(tr("title"), mapError(err))
+    end
+  else
+    local st = apply.setStatic(expanded, meta, selectedConnector)
+    status = st
+    noctalia.notify(tr("title"), tr("applied"))
+    quickPathValue = ""
+    render()
+  end
 end
 
 function onPbCategory(index, _text)
@@ -924,7 +1133,7 @@ function onNextPage()
 end
 
 function onStop()
-  status = apply.stop()
+  status = apply.stop(selectedConnector)
   noctalia.notify(tr("title"), tr("stopped"))
   render()
 end
@@ -953,6 +1162,7 @@ local function discardSessionCache()
   we.clearCache()
   pixabay.cancelInFlight()
   wallhaven.cancelInFlight()
+  daily.clearCache()
 end
 
 function onClose()
@@ -975,6 +1185,8 @@ function onIpc(event, _payload)
     setProvider("wallhaven")
   elseif event == "local" then
     setProvider("local")
+  elseif event == "daily" then
+    setProvider("daily")
   elseif event == "wallpaperengine" then
     setProvider("wallpaperengine")
   end

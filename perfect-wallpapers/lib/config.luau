@@ -4,7 +4,7 @@ local config = {}
 
 function config.defaultProvider()
   local v = util.cfg("default_provider", "pixabay")
-  if v == "wallhaven" or v == "local" or v == "wallpaperengine" then
+  if v == "wallhaven" or v == "local" or v == "wallpaperengine" or v == "daily" then
     return v
   end
   return "pixabay"
@@ -166,12 +166,46 @@ function config.videoFps()
   return tonumber(util.cfg("video_fps", 30)) or 30
 end
 
+function config.videoScale()
+  local s = util.cfg("video_scale", "panscan")
+  if s == "fit" or s == "stretch" then
+    return s
+  end
+  return "panscan"
+end
+
 function config.hardwareDecode()
   return util.truthy(util.cfg("hardware_decode", true))
 end
 
 function config.muteVideo()
   return util.truthy(util.cfg("mute_video", true))
+end
+
+function config.pauseOnBattery()
+  return util.truthy(util.cfg("pause_on_battery", true))
+end
+
+function config.copyToWallpaperDir()
+  return util.truthy(util.cfg("copy_to_wallpaper_dir", false))
+end
+
+-- ── Daily Wallpaper (Bing & NASA APOD) ──────────────────────────────────────
+
+function config.dailySubsource()
+  local s = util.cfg("daily_subsource", "bing")
+  if s == "nasa" then
+    return "nasa"
+  end
+  return "bing"
+end
+
+function config.dailyAutoRotate()
+  return util.truthy(util.cfg("daily_auto_rotate", false))
+end
+
+function config.dailyLocale()
+  return util.trim(util.cfg("daily_locale", ""))
 end
 
 function config.stopForeignBackends()

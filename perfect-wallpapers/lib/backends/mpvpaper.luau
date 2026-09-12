@@ -9,7 +9,17 @@ function mpvpaper.available()
 end
 
 local function mpvOpts()
-  local parts = { "loop-file=inf", "panscan=1.0" }
+  local scale = config.videoScale()
+  local parts = { "loop-file=inf", "stop-screensaver=no" }
+
+  if scale == "fit" then
+    table.insert(parts, "panscan=0.0")
+  elseif scale == "stretch" then
+    table.insert(parts, "keepaspect=no")
+  else
+    table.insert(parts, "panscan=1.0")
+  end
+
   if config.muteVideo() then
     table.insert(parts, "mute=yes")
   end
@@ -20,12 +30,12 @@ local function mpvOpts()
   if fps > 0 then
     table.insert(parts, "vf=fps=" .. tostring(fps))
   end
-  return table.concat(parts, ",")
+  return table.concat(parts, " ")
 end
 
-function mpvpaper.stop()
-  mutex.stopMpvpaper()
-  mutex.enableNoctaliaWallpaper(true)
+function mpvpaper.stop(connector)
+  mutex.stopMpvpaper(connector)
+  mutex.enableNoctaliaWallpaper(true, connector)
 end
 
 function mpvpaper.start(path, connector)
@@ -34,8 +44,8 @@ function mpvpaper.start(path, connector)
     target = "*"
   end
 
-  mutex.stopForeign()
-  mutex.enableNoctaliaWallpaper(false)
+  mutex.stopForeign(target)
+  mutex.enableNoctaliaWallpaper(false, target)
 
   local cmd = table.concat({
     "setsid -f mpvpaper",

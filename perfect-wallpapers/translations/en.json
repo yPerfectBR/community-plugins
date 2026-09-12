@@ -18,6 +18,7 @@
   "errors": {
     "apply_failed": "Failed to apply wallpaper",
     "download_failed": "Download failed",
+    "file_not_found": "File not found",
     "http_busy": "Network busy — try again",
     "http_status": "Request failed (HTTP %s)",
     "invalid_api_key": "Pixabay rejected the API key",
@@ -40,17 +41,34 @@
   "open_settings": "Plugin settings",
   "page_label": "Page %d / %d",
   "local": {
+    "apply_path_btn": "Apply",
     "dirs_count": "%d folder(s) configured",
     "manage_dirs": "Manage folders",
-    "no_dirs": "No local folders configured"
+    "no_dirs": "No local folders configured",
+    "quick_apply_placeholder": "Paste path or drop image/video…"
+  },
+  "monitors": {
+    "all": "All Displays (*)",
+    "target": "Monitor"
+  },
+  "daily": {
+    "bing": "Bing UHD",
+    "bing_attribution": "Bing Daily Wallpaper Archive",
+    "bing_desc": "Curated 4K/UHD imagery archive from Bing with full copyrights",
+    "nasa": "NASA APOD",
+    "nasa_attribution": "NASA Astronomy Picture of the Day",
+    "nasa_desc": "Astronomy Picture of the Day with scientific explanations",
+    "rotate_today": "Apply Today"
   },
   "providers": {
+    "daily": "Daily",
     "local": "Local",
     "pixabay": "Pixabay",
     "wallhaven": "Wallhaven",
     "wallpaperengine": "Wallpaper Engine"
   },
   "search": "Search",
+  "search_placeholder_daily": "Filter daily archive…",
   "search_placeholder_local": "Filter local files by name…",
   "search_placeholder_pixabay": "Search Pixabay (nature, city, abstract…)",
   "search_placeholder_wallhaven": "Search Wallhaven tags (nature, city night…)",
@@ -59,6 +77,7 @@
     "default_provider": {
       "label": "Default provider",
       "options": {
+        "daily": "Daily",
         "local": "Local",
         "pixabay": "Pixabay",
         "wallhaven": "Wallhaven",
@@ -68,6 +87,26 @@
     "wallpaperengine_dir": {
       "description": "Optional custom path to the Steam 431960 workshop folder if outside default locations.",
       "label": "Custom Wallpaper Engine workshop directory"
+    },
+    "daily_auto_rotate": {
+      "description": "Automatically fetch and apply today's wallpaper when available.",
+      "label": "Auto-rotate daily wallpaper"
+    },
+    "daily_locale": {
+      "description": "Optional locale code for Bing wallpaper archive (e.g. en-US, pt-BR).",
+      "label": "Daily Bing locale"
+    },
+    "daily_subsource": {
+      "description": "Choose between Bing curated archive and NASA Astronomy Picture of the Day.",
+      "label": "Daily wallpaper source",
+      "options": {
+        "bing": "Bing UHD",
+        "nasa": "NASA APOD"
+      }
+    },
+    "copy_to_wallpaper_dir": {
+      "description": "Automatically copy downloaded Daily and applied wallpapers into your local wallpaper directory.",
+      "label": "Save applied wallpapers to library"
     },
     "download_dir": {
       "description": "Shared fallback download folder when a provider-specific folder is empty.",
@@ -146,6 +185,19 @@
     "video_fps": {
       "description": "Cap video wallpaper FPS (0 = unlimited).",
       "label": "Video FPS cap"
+    },
+    "video_scale": {
+      "description": "Scaling mode used by mpvpaper for video wallpapers.",
+      "label": "Video scaling mode",
+      "options": {
+        "fit": "Fit screen (Letterbox)",
+        "panscan": "Crop to fill (Panscan)",
+        "stretch": "Stretch to fill"
+      }
+    },
+    "pause_on_battery": {
+      "description": "Conserve power when running on battery.",
+      "label": "Pause animations on battery"
     },
     "wallhaven_api_key": {
       "description": "Optional Wallhaven API key for higher rate limits and NSFW access.",
@@ -276,5 +328,10 @@
     },
     "sort_label": "Sort",
     "width": "Width"
+  },
+  "widget": {
+    "active_prefix": "Active",
+    "no_active": "No active wallpaper",
+    "title": "Daily Wallpaper"
   }
 }

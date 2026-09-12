@@ -15,7 +15,7 @@ This plugin was conceived and engineered to unify all wallpaper workflows into a
 | Field | Value |
 | --- | --- |
 | ID | `perfect/perfect-wallpapers` |
-| Entries | Bar widget: `widget`; panel: `hub`; shortcut: `shortcut`; service: `service` |
+| Entries | Bar widget: `widget`; panel: `hub`; shortcut: `shortcut`; service: `service`; desktop widget: `desktop` |
 
 ---
 
@@ -25,6 +25,7 @@ For in-depth setup, dependency resolution, API keys, and advanced options, refer
 
 | Provider | Media Types | API Key / Requirements | Documentation |
 | :--- | :--- | :--- | :--- |
+| **Daily Wallpaper** | 4K/UHD daily archives (Bing) & NASA APOD | None | Built-in |
 | **Wallhaven** | High-resolution static images & anime art | Optional (free key for NSFW & higher limits) | [Wallhaven Guide](docs/en_US/wallhaven.md) |
 | **Pixabay** | Curated photos, illustrations & video loops | Required (free personal API key) | [Pixabay Guide](docs/en_US/pixabay.md) |
 | **Wallpaper Engine** | 2D/3D interactive scenes, video loops & web | `linux-wallpaperengine` + Steam Workshop | [Wallpaper Engine Guide](docs/en_US/wallpaper-engine.md) |
@@ -54,7 +55,10 @@ Add the `widget` entry to your bar in Noctalia (**Settings → Bar → Widgets**
 ### 2. Control Center Shortcut
 Add the `shortcut` entry to your Control Center (**Settings → Control Center → Shortcuts**). The tile indicates whether a wallpaper is actively running and toggles the `hub` with a single click.
 
-### 3. CLI & IPC
+### 3. Desktop Widget
+Add the `desktop` desktop widget to your desktop (**Settings → Desktop → Widgets**). The widget displays the title, astronomical or photographer credits, date, and description of the active Daily Wallpaper directly on your background.
+
+### 4. CLI & IPC
 Toggle the panel or control the background service via IPC:
 
 ```sh
@@ -62,6 +66,7 @@ Toggle the panel or control the background service via IPC:
 noctalia msg panel-toggle perfect/perfect-wallpapers:hub
 
 # Switch tabs directly via IPC
+noctalia msg plugin perfect/perfect-wallpapers:hub all daily
 noctalia msg plugin perfect/perfect-wallpapers:hub all wallhaven
 noctalia msg plugin perfect/perfect-wallpapers:hub all pixabay
 noctalia msg plugin perfect/perfect-wallpapers:hub all wallpaperengine
@@ -69,6 +74,9 @@ noctalia msg plugin perfect/perfect-wallpapers:hub all local
 
 # Query backend status
 noctalia msg plugin perfect/perfect-wallpapers:service all status
+
+# Rotate / apply today's daily wallpaper
+noctalia msg plugin perfect/perfect-wallpapers:service all apply-daily
 
 # Stop active video/scene wallpaper engines
 noctalia msg plugin perfect/perfect-wallpapers:service all stop
@@ -85,7 +93,11 @@ Configure settings under **Settings → Plugins → Perfect Wallpapers** or insi
 
 | Setting | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `default_provider` | `select` | `pixabay` | Default provider loaded when opening the hub (`local`, `pixabay`, `wallhaven`, `wallpaperengine`). |
+| `default_provider` | `select` | `pixabay` | Default provider loaded when opening the hub (`daily`, `local`, `pixabay`, `wallhaven`, `wallpaperengine`). |
+| `daily_subsource` | `select` | `bing` | Default Daily Wallpaper source (`bing`, `nasa`). |
+| `daily_auto_rotate` | `bool` | `false` | Automatically fetch and apply today's wallpaper when available. |
+| `daily_locale` | `string` | `""` | Optional locale code for Bing wallpaper archive (e.g. `en-US`, `pt-BR`). |
+| `copy_to_wallpaper_dir` | `bool` | `false` | Automatically copy downloaded Daily and applied local wallpapers into your local wallpaper directory. |
 | `download_dir` | `folder` | `""` | Shared fallback directory for downloaded media (empty = `~/Pictures/Wallpapers/perfect-wallpapers`). |
 | `local_directories` | `string_list` | `[]` | List of local directories scanned for wallpapers and videos. |
 | `wallpaperengine_dir` | `folder` | `""` | Custom path to the Steam `431960` workshop directory if outside standard locations. |
@@ -97,6 +109,8 @@ Configure settings under **Settings → Plugins → Perfect Wallpapers** or insi
 | `wallhaven_purity_sketchy` | `bool` | `false` | Include artistic/sketchy wallpapers from Wallhaven. |
 | `wallhaven_purity_nsfw` | `bool` | `false` | Include adult wallpapers (requires Wallhaven API key). |
 | `video_fps` | `int` | `30` | Maximum FPS limit for video & Wallpaper Engine rendering (0 = uncapped). |
+| `video_scale` | `select` | `panscan` | Scaling mode used by mpvpaper (`panscan`, `fit`, `stretch`). |
+| `pause_on_battery` | `bool` | `true` | Conserve battery by pausing animations on battery power. |
 | `hardware_decode` | `bool` | `true` | Enable GPU hardware acceleration for video playback. |
 | `mute_video` | `bool` | `true` | Automatically mute audio on live wallpapers and video loops. |
 | `stop_foreign_backends` | `bool` | `true` | Halt competing daemons (`mpvpaper`, `swww-daemon`, `awww-daemon`) when applying. |
