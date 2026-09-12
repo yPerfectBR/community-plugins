@@ -1,0 +1,280 @@
+{
+  "actions": {
+    "stop": "Stop"
+  },
+  "applied": "Wallpaper applied",
+  "applying": "Downloading…",
+  "attribution": {
+    "local_default": "Local folders",
+    "local_item": "%s",
+    "pixabay_default": "Images and videos from Pixabay",
+    "pixabay_item": "Photo/video by %s on Pixabay",
+    "wallhaven_default": "Wallpapers from Wallhaven",
+    "wallhaven_item": "Wallhaven %s",
+    "wallpaperengine_default": "Steam Workshop (Wallpaper Engine)",
+    "wallpaperengine_item": "%s (Wallpaper Engine)"
+  },
+  "empty": "No results. Try another search.",
+  "errors": {
+    "apply_failed": "Failed to apply wallpaper",
+    "download_failed": "Download failed",
+    "http_busy": "Network busy — try again",
+    "http_status": "Request failed (HTTP %s)",
+    "invalid_api_key": "Pixabay rejected the API key",
+    "missing_pixabay_key": "Add your Pixabay API key in plugin settings",
+    "mpvpaper_missing": "mpvpaper is not installed",
+    "wallpaperengine_missing": "linux-wallpaperengine is not installed",
+    "no_local_dirs": "Add one or more local folders in plugin settings",
+    "no_we_wallpapers": "No Wallpaper Engine workshop wallpapers found in Steam",
+    "rate_limited": "API rate limit exceeded — wait a minute",
+    "request_failed": "Request failed"
+  },
+  "filters": {
+    "category": "Category",
+    "editors_choice": "Editors' choice",
+    "order": "Order",
+    "order_latest": "Latest",
+    "order_popular": "Popular"
+  },
+  "loading": "Loading…",
+  "open_settings": "Plugin settings",
+  "page_label": "Page %d / %d",
+  "local": {
+    "dirs_count": "%d folder(s) configured",
+    "manage_dirs": "Manage folders",
+    "no_dirs": "No local folders configured"
+  },
+  "providers": {
+    "local": "Local",
+    "pixabay": "Pixabay",
+    "wallhaven": "Wallhaven",
+    "wallpaperengine": "Wallpaper Engine"
+  },
+  "search": "Search",
+  "search_placeholder_local": "Filter local files by name…",
+  "search_placeholder_pixabay": "Search Pixabay (nature, city, abstract…)",
+  "search_placeholder_wallhaven": "Search Wallhaven tags (nature, city night…)",
+  "search_placeholder_we": "Search Wallpaper Engine library…",
+  "settings": {
+    "default_provider": {
+      "label": "Default provider",
+      "options": {
+        "local": "Local",
+        "pixabay": "Pixabay",
+        "wallhaven": "Wallhaven",
+        "wallpaperengine": "Wallpaper Engine"
+      }
+    },
+    "wallpaperengine_dir": {
+      "description": "Optional custom path to the Steam 431960 workshop folder if outside default locations.",
+      "label": "Custom Wallpaper Engine workshop directory"
+    },
+    "download_dir": {
+      "description": "Shared fallback download folder when a provider-specific folder is empty.",
+      "label": "Shared download directory"
+    },
+    "glyph": {
+      "label": "Bar glyph"
+    },
+    "hardware_decode": {
+      "description": "Ask mpv to use hardware decoding for video wallpapers.",
+      "label": "Hardware decode"
+    },
+    "local_directories": {
+      "description": "Folders scanned for local images and videos. Add one path per entry.",
+      "label": "Local directories"
+    },
+    "mute_video": {
+      "label": "Mute video wallpapers"
+    },
+    "pixabay_api_key": {
+      "description": "API key from https://pixabay.com/api/docs/ (required for Pixabay).",
+      "label": "Pixabay API key"
+    },
+    "pixabay_default_media": {
+      "label": "Pixabay default tab",
+      "options": {
+        "image": "Images",
+        "video": "Videos"
+      }
+    },
+    "pixabay_download_dir": {
+      "description": "Optional Pixabay-only download folder. Empty uses the shared folder.",
+      "label": "Pixabay download directory"
+    },
+    "pixabay_image_type": {
+      "label": "Pixabay image type",
+      "options": {
+        "all": "All",
+        "illustration": "Illustration",
+        "photo": "Photo",
+        "vector": "Vector"
+      }
+    },
+    "pixabay_min_height": {
+      "label": "Pixabay minimum height"
+    },
+    "pixabay_min_width": {
+      "label": "Pixabay minimum width"
+    },
+    "pixabay_orientation": {
+      "label": "Pixabay orientation",
+      "options": {
+        "all": "All",
+        "horizontal": "Horizontal",
+        "vertical": "Vertical"
+      }
+    },
+    "pixabay_safesearch": {
+      "description": "Only return Pixabay media suitable for all ages.",
+      "label": "Pixabay safe search"
+    },
+    "pixabay_video_quality": {
+      "description": "Preferred Pixabay video stream size.",
+      "label": "Pixabay video quality",
+      "options": {
+        "large": "Large",
+        "medium": "Medium",
+        "small": "Small",
+        "tiny": "Tiny"
+      }
+    },
+    "stop_foreign_backends": {
+      "description": "Stop mpvpaper, Wallpaper Engine, swww, and awww when applying a new wallpaper.",
+      "label": "Stop other wallpaper daemons"
+    },
+    "video_fps": {
+      "description": "Cap video wallpaper FPS (0 = unlimited).",
+      "label": "Video FPS cap"
+    },
+    "wallhaven_api_key": {
+      "description": "Optional Wallhaven API key for higher rate limits and NSFW access.",
+      "label": "Wallhaven API key"
+    },
+    "wallhaven_categories_anime": {
+      "label": "Wallhaven category: Anime"
+    },
+    "wallhaven_categories_general": {
+      "label": "Wallhaven category: General"
+    },
+    "wallhaven_categories_people": {
+      "label": "Wallhaven category: People"
+    },
+    "wallhaven_download_dir": {
+      "description": "Optional Wallhaven-only download folder. Empty uses the shared folder.",
+      "label": "Wallhaven download directory"
+    },
+    "wallhaven_min_height": {
+      "label": "Wallhaven default height filter"
+    },
+    "wallhaven_min_width": {
+      "label": "Wallhaven default width filter"
+    },
+    "wallhaven_order": {
+      "label": "Wallhaven sort order",
+      "options": {
+        "asc": "Ascending",
+        "desc": "Descending"
+      }
+    },
+    "wallhaven_purity_nsfw": {
+      "description": "Requires a Wallhaven API key.",
+      "label": "Wallhaven purity: NSFW"
+    },
+    "wallhaven_purity_sfw": {
+      "label": "Wallhaven purity: SFW"
+    },
+    "wallhaven_purity_sketchy": {
+      "label": "Wallhaven purity: Sketchy"
+    },
+    "wallhaven_ratio": {
+      "label": "Wallhaven default ratio",
+      "options": {
+        "any": "Any",
+        "portrait": "Portrait",
+        "r16x10": "16:10",
+        "r16x9": "16:9",
+        "r21x9": "21:9",
+        "wide": "Wide"
+      }
+    },
+    "wallhaven_resolution_mode": {
+      "label": "Wallhaven resolution mode",
+      "options": {
+        "atleast": "At least",
+        "exact": "Exact"
+      }
+    },
+    "wallhaven_sorting": {
+      "label": "Wallhaven default sorting",
+      "options": {
+        "date_added": "Date added",
+        "favorites": "Favorites",
+        "hot": "Hot",
+        "random": "Random",
+        "relevance": "Relevance",
+        "toplist": "Toplist",
+        "views": "Views"
+      }
+    }
+  },
+  "status": {
+    "image": "Active: image",
+    "image_from": "Active: image (%s)",
+    "none": "Active: none",
+    "video": "Active: video",
+    "video_from": "Active: video (%s)",
+    "wallpaperengine": "Active: Wallpaper Engine",
+    "wallpaperengine_from": "Active: Wallpaper Engine (%s)"
+  },
+  "stopped": "Wallpaper backends stopped",
+  "tabs": {
+    "images": "Images",
+    "videos": "Videos"
+  },
+  "title": "Perfect Wallpapers",
+  "wallpaperengine": {
+    "installed_count": "%d wallpapers in Workshop",
+    "no_installed": "No wallpapers found in Steam Workshop",
+    "rescan": "Rescan",
+    "type_all": "All",
+    "type_filter": "Type",
+    "type_scene": "Scene",
+    "type_video": "Video",
+    "type_web": "Web"
+  },
+  "wallhaven": {
+    "categories": "Categories",
+    "category_anime": "Anime",
+    "category_general": "General",
+    "category_people": "People",
+    "clear_resolution": "Clear",
+    "height": "Height",
+    "order_asc": "Ascending",
+    "order_desc": "Descending",
+    "purity": "Purity",
+    "purity_nsfw": "NSFW",
+    "purity_sfw": "SFW",
+    "purity_sketchy": "Sketchy",
+    "ratio": {
+      "any": "Any",
+      "portrait": "Portrait",
+      "wide": "Wide"
+    },
+    "ratio_label": "Ratio",
+    "resolution": "Resolution",
+    "resolution_atleast": "At least",
+    "resolution_exact": "Exact",
+    "sort": {
+      "date_added": "Date added",
+      "favorites": "Favorites",
+      "hot": "Hot",
+      "random": "Random",
+      "relevance": "Relevance",
+      "toplist": "Toplist",
+      "views": "Views"
+    },
+    "sort_label": "Sort",
+    "width": "Width"
+  }
+}

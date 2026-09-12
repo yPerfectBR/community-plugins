@@ -1,0 +1,312 @@
+# Perfect Wallpapers — multi-provider wallpaper hub for Noctalia.
+# Pixabay + Wallhaven browse/apply, shared video backend controls, and a
+# headless [[service]] for mutual exclusion + CLI IPC.
+
+id = "perfect/perfect-wallpapers"
+name = "Perfect Wallpapers"
+version = "0.3.1"
+plugin_api = 28
+author = "perfect"
+license = "MIT"
+dependencies = ["mpvpaper", "mpv", "pkill", "setsid", "linux-wallpaperengine"]
+tags = ["bar", "panel", "shortcut", "wallpaper", "video", "theming", "media"]
+icon = "photo"
+description = "Browse Pixabay, Wallhaven, and Wallpaper Engine, apply wallpapers, and keep wallpaper backends from fighting each other."
+
+[[setting]]
+key = "default_provider"
+type = "select"
+label_key = "settings.default_provider.label"
+default = "pixabay"
+options = [
+  { value = "local", label_key = "settings.default_provider.options.local" },
+  { value = "pixabay", label_key = "settings.default_provider.options.pixabay" },
+  { value = "wallhaven", label_key = "settings.default_provider.options.wallhaven" },
+  { value = "wallpaperengine", label_key = "settings.default_provider.options.wallpaperengine" },
+]
+
+[[setting]]
+key = "wallpaperengine_dir"
+type = "folder"
+label_key = "settings.wallpaperengine_dir.label"
+description_key = "settings.wallpaperengine_dir.description"
+default = ""
+
+[[setting]]
+key = "download_dir"
+type = "folder"
+label_key = "settings.download_dir.label"
+description_key = "settings.download_dir.description"
+default = ""
+
+[[setting]]
+key = "local_directories"
+type = "string_list"
+label_key = "settings.local_directories.label"
+description_key = "settings.local_directories.description"
+default = []
+
+# ── Pixabay ──────────────────────────────────────────────────────────────────
+
+[[setting]]
+key = "pixabay_api_key"
+type = "string"
+label_key = "settings.pixabay_api_key.label"
+description_key = "settings.pixabay_api_key.description"
+default = ""
+
+[[setting]]
+key = "pixabay_download_dir"
+type = "folder"
+label_key = "settings.pixabay_download_dir.label"
+description_key = "settings.pixabay_download_dir.description"
+default = ""
+
+[[setting]]
+key = "pixabay_safesearch"
+type = "bool"
+label_key = "settings.pixabay_safesearch.label"
+description_key = "settings.pixabay_safesearch.description"
+default = true
+
+[[setting]]
+key = "pixabay_default_media"
+type = "select"
+label_key = "settings.pixabay_default_media.label"
+default = "image"
+options = [
+  { value = "image", label_key = "settings.pixabay_default_media.options.image" },
+  { value = "video", label_key = "settings.pixabay_default_media.options.video" },
+]
+
+[[setting]]
+key = "pixabay_image_type"
+type = "select"
+label_key = "settings.pixabay_image_type.label"
+default = "photo"
+options = [
+  { value = "all", label_key = "settings.pixabay_image_type.options.all" },
+  { value = "photo", label_key = "settings.pixabay_image_type.options.photo" },
+  { value = "illustration", label_key = "settings.pixabay_image_type.options.illustration" },
+  { value = "vector", label_key = "settings.pixabay_image_type.options.vector" },
+]
+
+[[setting]]
+key = "pixabay_orientation"
+type = "select"
+label_key = "settings.pixabay_orientation.label"
+default = "horizontal"
+options = [
+  { value = "all", label_key = "settings.pixabay_orientation.options.all" },
+  { value = "horizontal", label_key = "settings.pixabay_orientation.options.horizontal" },
+  { value = "vertical", label_key = "settings.pixabay_orientation.options.vertical" },
+]
+
+[[setting]]
+key = "pixabay_min_width"
+type = "int"
+label_key = "settings.pixabay_min_width.label"
+default = 0
+min = 0
+max = 7680
+step = 64
+
+[[setting]]
+key = "pixabay_min_height"
+type = "int"
+label_key = "settings.pixabay_min_height.label"
+default = 0
+min = 0
+max = 4320
+step = 64
+
+[[setting]]
+key = "pixabay_video_quality"
+type = "select"
+label_key = "settings.pixabay_video_quality.label"
+description_key = "settings.pixabay_video_quality.description"
+default = "medium"
+options = [
+  { value = "large", label_key = "settings.pixabay_video_quality.options.large" },
+  { value = "medium", label_key = "settings.pixabay_video_quality.options.medium" },
+  { value = "small", label_key = "settings.pixabay_video_quality.options.small" },
+  { value = "tiny", label_key = "settings.pixabay_video_quality.options.tiny" },
+]
+
+# ── Wallhaven ────────────────────────────────────────────────────────────────
+
+[[setting]]
+key = "wallhaven_api_key"
+type = "string"
+label_key = "settings.wallhaven_api_key.label"
+description_key = "settings.wallhaven_api_key.description"
+default = ""
+
+[[setting]]
+key = "wallhaven_download_dir"
+type = "folder"
+label_key = "settings.wallhaven_download_dir.label"
+description_key = "settings.wallhaven_download_dir.description"
+default = ""
+
+[[setting]]
+key = "wallhaven_sorting"
+type = "select"
+label_key = "settings.wallhaven_sorting.label"
+default = "date_added"
+options = [
+  { value = "relevance", label_key = "settings.wallhaven_sorting.options.relevance" },
+  { value = "random", label_key = "settings.wallhaven_sorting.options.random" },
+  { value = "date_added", label_key = "settings.wallhaven_sorting.options.date_added" },
+  { value = "views", label_key = "settings.wallhaven_sorting.options.views" },
+  { value = "favorites", label_key = "settings.wallhaven_sorting.options.favorites" },
+  { value = "toplist", label_key = "settings.wallhaven_sorting.options.toplist" },
+  { value = "hot", label_key = "settings.wallhaven_sorting.options.hot" },
+]
+
+[[setting]]
+key = "wallhaven_order"
+type = "select"
+label_key = "settings.wallhaven_order.label"
+default = "desc"
+options = [
+  { value = "desc", label_key = "settings.wallhaven_order.options.desc" },
+  { value = "asc", label_key = "settings.wallhaven_order.options.asc" },
+]
+
+[[setting]]
+key = "wallhaven_categories_general"
+type = "bool"
+label_key = "settings.wallhaven_categories_general.label"
+default = true
+
+[[setting]]
+key = "wallhaven_categories_anime"
+type = "bool"
+label_key = "settings.wallhaven_categories_anime.label"
+default = true
+
+[[setting]]
+key = "wallhaven_categories_people"
+type = "bool"
+label_key = "settings.wallhaven_categories_people.label"
+default = true
+
+[[setting]]
+key = "wallhaven_purity_sfw"
+type = "bool"
+label_key = "settings.wallhaven_purity_sfw.label"
+default = true
+
+[[setting]]
+key = "wallhaven_purity_sketchy"
+type = "bool"
+label_key = "settings.wallhaven_purity_sketchy.label"
+default = false
+
+[[setting]]
+key = "wallhaven_purity_nsfw"
+type = "bool"
+label_key = "settings.wallhaven_purity_nsfw.label"
+description_key = "settings.wallhaven_purity_nsfw.description"
+default = false
+
+[[setting]]
+key = "wallhaven_ratio"
+type = "select"
+label_key = "settings.wallhaven_ratio.label"
+default = "any"
+options = [
+  { value = "any", label_key = "settings.wallhaven_ratio.options.any" },
+  { value = "wide", label_key = "settings.wallhaven_ratio.options.wide" },
+  { value = "portrait", label_key = "settings.wallhaven_ratio.options.portrait" },
+  { value = "16x9", label_key = "settings.wallhaven_ratio.options.r16x9" },
+  { value = "16x10", label_key = "settings.wallhaven_ratio.options.r16x10" },
+  { value = "21x9", label_key = "settings.wallhaven_ratio.options.r21x9" },
+]
+
+[[setting]]
+key = "wallhaven_resolution_mode"
+type = "select"
+label_key = "settings.wallhaven_resolution_mode.label"
+default = "atleast"
+options = [
+  { value = "atleast", label_key = "settings.wallhaven_resolution_mode.options.atleast" },
+  { value = "exact", label_key = "settings.wallhaven_resolution_mode.options.exact" },
+]
+
+[[setting]]
+key = "wallhaven_min_width"
+type = "int"
+label_key = "settings.wallhaven_min_width.label"
+default = 1920
+min = 0
+max = 7680
+step = 64
+
+[[setting]]
+key = "wallhaven_min_height"
+type = "int"
+label_key = "settings.wallhaven_min_height.label"
+default = 1080
+min = 0
+max = 4320
+step = 64
+
+# ── Shared video / backends ──────────────────────────────────────────────────
+
+[[setting]]
+key = "video_fps"
+type = "int"
+label_key = "settings.video_fps.label"
+description_key = "settings.video_fps.description"
+default = 30
+min = 0
+max = 240
+step = 1
+
+[[setting]]
+key = "hardware_decode"
+type = "bool"
+label_key = "settings.hardware_decode.label"
+description_key = "settings.hardware_decode.description"
+default = true
+
+[[setting]]
+key = "mute_video"
+type = "bool"
+label_key = "settings.mute_video.label"
+default = true
+
+[[setting]]
+key = "stop_foreign_backends"
+type = "bool"
+label_key = "settings.stop_foreign_backends.label"
+description_key = "settings.stop_foreign_backends.description"
+default = true
+
+[[service]]
+id = "service"
+entry = "service.luau"
+
+[[panel]]
+id = "hub"
+entry = "panel.luau"
+width = 960
+height = 860
+placement = "attached"
+position = "auto"
+
+[[widget]]
+id = "widget"
+entry = "widget.luau"
+
+  [[widget.setting]]
+  key = "glyph"
+  type = "glyph"
+  label_key = "settings.glyph.label"
+  default = "photo"
+
+[[shortcut]]
+id = "shortcut"
+entry = "shortcut.luau"
