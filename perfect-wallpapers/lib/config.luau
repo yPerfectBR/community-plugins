@@ -179,7 +179,7 @@ function config.hardwareDecode()
 end
 
 function config.muteVideo()
-  return util.truthy(util.cfg("mute_video", true))
+  return util.truthy(util.cfg("mute_video", false))
 end
 
 function config.pauseOnBattery()

@@ -2528,3 +2528,16 @@ icon = "moon"
 description = "change workspace indicator with per-state custom icons, for Hyprland and Niri."
 plugin_api = 12
 tags = ["bar", "indicator", "hyprland", "niri"]
+
+[[plugin]]
+id = "perfect/perfect-wallpapers"
+name = "Perfect Wallpapers"
+version = "0.4.0"
+updated_at = 1789244256
+added_at = 1789241637
+author = "perfect"
+license = "MIT"
+icon = "photo"
+description = "Browse Bing Daily, NASA APOD, Pixabay, Wallhaven, and Wallpaper Engine, with per-monitor controls and video wallpapers."
+plugin_api = 28
+tags = ["bar", "panel", "shortcut", "wallpaper", "video", "theming", "media"]

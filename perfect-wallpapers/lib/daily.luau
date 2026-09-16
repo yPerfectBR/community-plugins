@@ -68,7 +68,20 @@ local function writeCache(subSource, items)
   end)
 end
 
+function daily.clearCache()
+  for _, sub in ipairs({ "bing", "nasa" }) do
+    local path = cacheFilePath(sub)
+    if noctalia.fileExists(path) then
+      noctalia.runAsync("rm -f " .. util.shellQuote(path))
+    end
+  end
+end
+
 function daily.fetchBing(locale, cb)
+  if type(locale) == "function" then
+    cb = locale
+    locale = nil
+  end
   locale = locale or config.dailyLocale()
   if locale == "" then
     locale = "en-US"
@@ -248,17 +261,74 @@ function daily.fetchNasa(cb)
   end
 end
 
-function daily.fetch(subSource, cb)
+function daily.fetch(subSource, localeOrCb, maybeCb)
   subSource = subSource or config.dailySubsource()
+  local locale = nil
+  local cb = maybeCb
+  if type(localeOrCb) == "function" then
+    cb = localeOrCb
+  else
+    locale = localeOrCb
+  end
+  if type(cb) ~= "function" then
+    return
+  end
+
   if subSource == "nasa" then
     daily.fetchNasa(cb)
   else
-    daily.fetchBing(nil, cb)
+    daily.fetchBing(locale, cb)
   end
 end
 
-function daily.today(subSource, cb)
-  daily.fetch(subSource, function(items, err)
+--- Hub expects { items = [...] }. count/locale are optional.
+function daily.archive(subSource, countOrCb, localeOrCb, maybeCb)
+  local count = 8
+  local locale = nil
+  local cb
+
+  if type(countOrCb) == "function" then
+    cb = countOrCb
+  else
+    count = tonumber(countOrCb) or 8
+    if type(localeOrCb) == "function" then
+      cb = localeOrCb
+    else
+      locale = localeOrCb
+      cb = maybeCb
+    end
+  end
+
+  if type(cb) ~= "function" then
+    return
+  end
+
+  daily.fetch(subSource, locale, function(items, err)
+    if type(items) ~= "table" then
+      cb(nil, err)
+      return
+    end
+    local slice = {}
+    for i = 1, math.min(count, #items) do
+      table.insert(slice, items[i])
+    end
+    cb({ items = slice, total = #items }, nil)
+  end)
+end
+
+function daily.today(subSource, localeOrCb, maybeCb)
+  local locale = nil
+  local cb = maybeCb
+  if type(localeOrCb) == "function" then
+    cb = localeOrCb
+  else
+    locale = localeOrCb
+  end
+  if type(cb) ~= "function" then
+    return
+  end
+
+  daily.fetch(subSource, locale, function(items, err)
     if type(items) == "table" and #items > 0 then
       cb(items[1], nil)
     else

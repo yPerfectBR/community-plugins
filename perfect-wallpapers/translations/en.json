@@ -124,7 +124,8 @@
       "label": "Local directories"
     },
     "mute_video": {
-      "label": "Mute video wallpapers"
+      "label": "Mute video wallpapers",
+      "description": "When enabled, Pixabay/local videos (mpvpaper) and Wallpaper Engine scenes play without sound."
     },
     "pixabay_api_key": {
       "description": "API key from https://pixabay.com/api/docs/ (required for Pixabay).",

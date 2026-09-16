@@ -8,6 +8,38 @@ function wallpaperengine.available()
   return noctalia.commandExists("linux-wallpaperengine")
 end
 
+local function stopShell(connector)
+  local mpvPattern
+  local wePattern
+  if connector and connector ~= "*" and connector ~= "all" then
+    mpvPattern = "mpvpaper.*" .. connector
+    wePattern = "linux-wallpaperengine.*" .. connector
+  else
+    mpvPattern = "(^|/)mpvpaper($| )"
+    wePattern = "(^|/)linux-wallpaperengine($| )"
+  end
+
+  local parts = {
+    "pkill -TERM -f " .. util.shellQuote(mpvPattern) .. " 2>/dev/null",
+    "pkill -TERM -f " .. util.shellQuote(wePattern) .. " 2>/dev/null",
+    "systemctl --user stop linux-wallpaperengine 2>/dev/null",
+    "sleep 0.2",
+    "pkill -9 -f " .. util.shellQuote(mpvPattern) .. " 2>/dev/null",
+    "pkill -9 -f " .. util.shellQuote(wePattern) .. " 2>/dev/null",
+  }
+
+  if config.stopForeignBackends() and (not connector or connector == "*" or connector == "all") then
+    table.insert(parts, "pkill -TERM -f " .. util.shellQuote("(^|/)swww-daemon($| )") .. " 2>/dev/null")
+    table.insert(parts, "pkill -TERM -f " .. util.shellQuote("(^|/)awww-daemon($| )") .. " 2>/dev/null")
+    table.insert(parts, "sleep 0.05")
+    table.insert(parts, "pkill -9 -f " .. util.shellQuote("(^|/)swww-daemon($| )") .. " 2>/dev/null")
+    table.insert(parts, "pkill -9 -f " .. util.shellQuote("(^|/)awww-daemon($| )") .. " 2>/dev/null")
+  end
+
+  table.insert(parts, "true")
+  return table.concat(parts, "; ")
+end
+
 function wallpaperengine.stop(connector)
   mutex.stopWallpaperEngine(connector)
   mutex.enableNoctaliaWallpaper(true, connector)
@@ -20,9 +52,7 @@ function wallpaperengine.start(idOrPath, opts, connector)
     target = "*"
   end
 
-  mutex.stopForeign(target)
-
-  -- Sincroniza a paleta de cores do Noctalia / Umbriel com o preview estático
+  -- Sync palette from static preview while Noctalia wallpaper is still enabled.
   if opts.previewPath and noctalia.fileExists(opts.previewPath) then
     if target == "*" or target == "all" then
       noctalia.setWallpaper(opts.previewPath)
@@ -62,8 +92,8 @@ function wallpaperengine.start(idOrPath, opts, connector)
     table.insert(args, "--bg " .. util.shellQuote(idOrPath))
   end
 
-  local cmd = table.concat(args, " ")
-  return noctalia.runAsync(cmd)
+  -- Same race fix as mpvpaper: stop old engines then start in one shell chain.
+  return noctalia.runAsync(stopShell(target) .. "; " .. table.concat(args, " "))
 end
 
 return wallpaperengine

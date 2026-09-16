@@ -777,7 +777,7 @@ render = function()
         ui.button({ text = tr("search"), variant = "primary", onClick = "onSearch" }),
       })
     else
-      nil,
+      ui.row({ gap = 0, height = 0 }, {}),
 
     if provider == "daily" then
       dailyFilters()
@@ -1159,10 +1159,20 @@ local function discardSessionCache()
 
   thumbs.wipe()
   session_cache.wipeAll()
-  we.clearCache()
-  pixabay.cancelInFlight()
-  wallhaven.cancelInFlight()
-  daily.clearCache()
+  if type(we.clearCache) == "function" then
+    we.clearCache()
+  elseif type(we.invalidateCache) == "function" then
+    we.invalidateCache()
+  end
+  if type(pixabay.cancelInFlight) == "function" then
+    pixabay.cancelInFlight()
+  end
+  if type(wallhaven.cancelInFlight) == "function" then
+    wallhaven.cancelInFlight()
+  end
+  if type(daily.clearCache) == "function" then
+    daily.clearCache()
+  end
 end
 
 function onClose()

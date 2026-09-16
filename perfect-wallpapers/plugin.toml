@@ -330,7 +330,8 @@ default = true
 key = "mute_video"
 type = "bool"
 label_key = "settings.mute_video.label"
-default = true
+description_key = "settings.mute_video.description"
+default = false
 
 [[setting]]
 key = "stop_foreign_backends"

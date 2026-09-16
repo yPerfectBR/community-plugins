@@ -33,6 +33,38 @@ local function mpvOpts()
   return table.concat(parts, " ")
 end
 
+local function stopShell(connector)
+  local mpvPattern
+  local wePattern
+  if connector and connector ~= "*" and connector ~= "all" then
+    mpvPattern = "mpvpaper.*" .. connector
+    wePattern = "linux-wallpaperengine.*" .. connector
+  else
+    mpvPattern = "(^|/)mpvpaper($| )"
+    wePattern = "(^|/)linux-wallpaperengine($| )"
+  end
+
+  local parts = {
+    "pkill -TERM -f " .. util.shellQuote(mpvPattern) .. " 2>/dev/null",
+    "pkill -TERM -f " .. util.shellQuote(wePattern) .. " 2>/dev/null",
+    "systemctl --user stop linux-wallpaperengine 2>/dev/null",
+    "sleep 0.2",
+    "pkill -9 -f " .. util.shellQuote(mpvPattern) .. " 2>/dev/null",
+    "pkill -9 -f " .. util.shellQuote(wePattern) .. " 2>/dev/null",
+  }
+
+  if config.stopForeignBackends() and (not connector or connector == "*" or connector == "all") then
+    table.insert(parts, "pkill -TERM -f " .. util.shellQuote("(^|/)swww-daemon($| )") .. " 2>/dev/null")
+    table.insert(parts, "pkill -TERM -f " .. util.shellQuote("(^|/)awww-daemon($| )") .. " 2>/dev/null")
+    table.insert(parts, "sleep 0.05")
+    table.insert(parts, "pkill -9 -f " .. util.shellQuote("(^|/)swww-daemon($| )") .. " 2>/dev/null")
+    table.insert(parts, "pkill -9 -f " .. util.shellQuote("(^|/)awww-daemon($| )") .. " 2>/dev/null")
+  end
+
+  table.insert(parts, "true")
+  return table.concat(parts, "; ")
+end
+
 function mpvpaper.stop(connector)
   mutex.stopMpvpaper(connector)
   mutex.enableNoctaliaWallpaper(true, connector)
@@ -44,10 +76,13 @@ function mpvpaper.start(path, connector)
     target = "*"
   end
 
-  mutex.stopForeign(target)
+  -- Disable Noctalia's static layer so mpvpaper owns the background.
   mutex.enableNoctaliaWallpaper(false, target)
 
-  local cmd = table.concat({
+  -- CRITICAL: stop + start must be one shell chain. A separate async pkill
+  -- (with sleep + SIGKILL) was racing and killing the freshly spawned mpvpaper,
+  -- leaving a black screen with wallpaper managed by "external source".
+  local startCmd = table.concat({
     "setsid -f mpvpaper",
     "-o",
     util.shellQuote(mpvOpts()),
@@ -55,7 +90,7 @@ function mpvpaper.start(path, connector)
     util.shellQuote(path),
   }, " ")
 
-  return noctalia.runAsync(cmd)
+  return noctalia.runAsync(stopShell(target) .. "; " .. startCmd)
 end
 
 return mpvpaper
