@@ -188,7 +188,7 @@
       "label": "Video FPS cap"
     },
     "video_scale": {
-      "description": "Scaling mode used by mpvpaper for video wallpapers.",
+      "description": "Scaling for mpvpaper videos and Wallpaper Engine scenes (crop/fit/stretch).",
       "label": "Video scaling mode",
       "options": {
         "fit": "Fit screen (Letterbox)",

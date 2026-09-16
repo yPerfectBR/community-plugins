@@ -45,6 +45,28 @@ function wallpaperengine.stop(connector)
   mutex.enableNoctaliaWallpaper(true, connector)
 end
 
+-- Map Perfect Wallpapers video_scale → linux-wallpaperengine --scaling.
+-- Without --scaling/--clamp, the engine defaults to edge-clamp UV bleed:
+-- stretched pixel bands on top/bottom when the scene aspect ≠ panel (e.g. 16:9 on 16:10).
+local function weScaling()
+  local s = config.videoScale()
+  if s == "fit" then
+    return "fit"
+  end
+  if s == "stretch" then
+    return "stretch"
+  end
+  return "fill" -- panscan / cover (crop to fill), matches mpvpaper panscan=1.0
+end
+
+local function appendScreenBg(args, screenName, idOrPath, scaling)
+  table.insert(args, "--screen-root " .. util.shellQuote(screenName))
+  table.insert(args, "--bg " .. util.shellQuote(idOrPath))
+  table.insert(args, "--scaling " .. scaling)
+  -- border = solid edge color; clamp = stretch edge texels (the distorted bars)
+  table.insert(args, "--clamp border")
+end
+
 function wallpaperengine.start(idOrPath, opts, connector)
   opts = opts or {}
   local target = connector
@@ -64,6 +86,7 @@ function wallpaperengine.start(idOrPath, opts, connector)
   mutex.enableNoctaliaWallpaper(false, target)
 
   local args = { "setsid -f linux-wallpaperengine" }
+  local scaling = weScaling()
 
   if config.muteVideo() or opts.silent then
     table.insert(args, "--silent")
@@ -74,22 +97,26 @@ function wallpaperengine.start(idOrPath, opts, connector)
     table.insert(args, "--fps " .. tostring(fps))
   end
 
-  if target == "*" then
+  if target == "*" or target == "all" then
     local outputs = (type(noctalia.outputs) == "function" and noctalia.outputs()) or {}
+    local any = false
     if #outputs > 0 then
       for _, out in ipairs(outputs) do
         local outName = (type(out) == "table" and out.name) or tostring(out)
         if outName ~= "" then
-          table.insert(args, "--screen-root " .. util.shellQuote(outName))
+          appendScreenBg(args, outName, idOrPath, scaling)
+          any = true
         end
       end
-      table.insert(args, util.shellQuote(idOrPath))
-    else
+    end
+    if not any then
+      -- Fallback: default background + explicit scale (still avoids edge bleed)
+      table.insert(args, "--scaling " .. scaling)
+      table.insert(args, "--clamp border")
       table.insert(args, util.shellQuote(idOrPath))
     end
   else
-    table.insert(args, "--screen-root " .. util.shellQuote(target))
-    table.insert(args, "--bg " .. util.shellQuote(idOrPath))
+    appendScreenBg(args, target, idOrPath, scaling)
   end
 
   -- Same race fix as mpvpaper: stop old engines then start in one shell chain.

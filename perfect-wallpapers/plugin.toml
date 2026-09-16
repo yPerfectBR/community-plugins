@@ -4,7 +4,7 @@
 
 id = "perfect/perfect-wallpapers"
 name = "Perfect Wallpapers"
-version = "0.4.0"
+version = "0.4.1"
 plugin_api = 28
 author = "perfect"
 license = "MIT"
