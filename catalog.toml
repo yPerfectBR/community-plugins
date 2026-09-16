@@ -2532,8 +2532,8 @@ tags = ["bar", "indicator", "hyprland", "niri"]
 [[plugin]]
 id = "perfect/perfect-wallpapers"
 name = "Perfect Wallpapers"
-version = "0.4.0"
-updated_at = 1789244256
+version = "0.4.1"
+updated_at = 1789330000
 added_at = 1789241637
 author = "perfect"
 license = "MIT"
